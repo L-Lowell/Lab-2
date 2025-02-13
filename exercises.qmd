@@ -4,23 +4,49 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(tidyverse)
+```
+```{r}
+library(dplyr)
 ```
 
-You can add options to executable code like this
-
 ```{r}
-#| echo: false
-2 * 2
+##Question 1
+
+nrow(tree_dat)
+
+glimpse(tree_dat)
+
+tree_dat %>% summarise (n=n())
+
+nrow(tree_dat)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+#Question 2
+
+tree_dat%>%
+  filter(standID == 1) %>%
+  tally()
+```
+
+```{r}
+#Question 3
+
+tree_dat %>%
+  filter (species %in% c("ABBA", "PIST"))%>%
+  count(species)
+
+```
+
+```{r}
+#Question 4
+
+last_year <- max(tree_dat$year, na.rm =TRUE)
+
+tree_dat%>%
+  filter(year == last_year, age > 200) %>%
+  tally ()
+```
+
