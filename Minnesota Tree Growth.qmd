@@ -1,0 +1,341 @@
+---
+title: "Lab 2: Minnesota Tree Growth"
+author: "Lance Lowel"
+editor: visual
+format: html
+---
+
+```{r}
+library(readr)
+tree_dat <- read_csv("C:/Users/lance/github/ESS330/Minnesota tree growth/Lab 2/data/tree_dat.csv")
+View(tree_dat) 
+```
+
+```{r}
+library(dplyr)
+library(tidyverse)
+```
+
+![Photo of Pinus resinosa by Joseph O'Brien, USDA Forest Service, Bugwood.or](images/plantpic.jpg)
+
+# Using Glipse to Understand the Dataset
+
+```{r}
+nrow(tree_dat)
+
+glimpse(tree_dat)
+
+tree_dat %>% summarise (n=n())
+
+nrow(tree_dat)
+```
+
+This data set is extensive! It is clear that sifting through this dataset manually would be wildly impractical. With eight original columns (as well as two additional columns added to classify DBH) and hundreds of rows my computer even struggles to desplay it all. Spanning from 1897 to 2007, this dataset tracks the growth of numerous trees across 35 stands.
+
+# How many records have been made in stand 1?
+
+```{r}
+tree_dat%>%
+  filter(standID == 1) %>%
+  count()
+```
+
+A total of 979 records have been collected in Stand 1. This count includes instances where the same trees were measured multiple times throughout the study period.
+
+# How many records exist for Abies balsamea and Pinus strobus?
+
+```{r}
+tree_dat %>%
+  filter (species %in% c("ABBA", "PIST"))%>%
+  count(species)
+
+```
+
+The dataset contains 13,033 recorded measurements for Abies balsamea (ABBA) and 4,188 recorded measurements for Pinus strobus (PIST). The significantly higher number of Abies balsamea records suggests that it was either studied more extensively than Pinus strobus or it was more prominent in Minnesota
+
+# How many trees are older than 200 years in the latest dataset year?
+
+```{r}
+#Question 4:  How many trees are older then 200 years old in the last year of the dataset?
+
+last_year <- max(tree_dat$year, na.rm =TRUE)
+
+tree_dat%>%
+  filter(year == last_year, age > 200) %>%
+  tally ()
+```
+
+In the final recorded year of the dataset, 2007, there were seven trees older than 200 years.
+
+# What is the oldest tree in the dataset?
+
+```{r}
+oldest_tree <- tree_dat  %>% #use tree_dat
+  slice_max(order_by = age)%>%
+  select(treeID)
+
+glimpse(oldest_tree)
+```
+
+Tree 24 was the oldest tree undefined.
+
+```{r}
+oldest_tree_data <- tree_dat %>%
+  slice_max(order_by = age, n = 1) %>%
+  glimpse()
+```
+
+Tree 24 reached an age of 269 years by 2007. It was located in Stand 2 and belonged to the species Pinus resinosa.
+
+# What are the oldest 5 trees recorded in 2001?
+
+```{r}
+oldest_5_trees_2001 <- tree_dat %>%
+  filter(year == 2001) %>%
+  slice_max(order_by = age, n = 5) %>%
+  select(treeID)
+
+glimpse(oldest_5_trees_2001)
+```
+
+The five oldest trees recorded in 2001 were Tree IDs 24, 25, 1595, 1598, and 1712.
+
+```{r}
+oldest_5_trees_2001_data <- tree_dat %>%
+  filter(year == 2001) %>%
+  slice_max(order_by = age, n = 5) %>%
+  glimpse()
+```
+
+The two oldest trees were Pinus resinosa located in Stand 2, while the other three were Fraxinus nigra, spread across Stands 24 and 26.
+
+# How many trees are in a 30% sample of those recorded in 2002?
+
+```{r}
+sampled_trees_2002 <- tree_dat %>%
+  filter(year == 2002) %>%
+  slice_sample(prop = 0.30)
+
+sample_count <- nrow(sampled_trees_2002)
+
+glimpse(sample_count)
+```
+
+In the year 2002, six-hundred eighty seven trees made up 30% of the recorded trees.
+
+# What are the IDs of the trees with the largest breat height radius in 2007's stad 5?
+
+```{r}
+top_three_trees <- tree_dat %>%
+  filter(standID == 5, year == 2007) %>%
+  arrange(desc(rad_ib)) %>%
+  slice_head(n = 3)
+
+glimpse(top_three_trees$treeID)
+```
+
+Trees 128, 157, and 135 had the absolute largest radii at breast height.
+
+# What are the trees with the smallest breast height radius in 2007's stand 3?
+
+```{r}
+smallest_3_trees_2007 <- tree_dat %>%
+  select(treeID, standID, year, rad_ib) %>%
+  filter(standID == 3, year == 2007) %>%
+  slice_min(order_by = rad_ib, n = 3) %>%
+  glimpse()
+```
+
+The smallest trees in stand 3 in 2007 were trees 50, 56, and 36 with respective radius at breast height sizes of 47, 48, and almost 55 centimeters respectfully.
+
+# Reducing and Renaming Columns to help better understand and Clarify a data set
+
+## Removing the stand column. Use glimspe to show the dataset.
+
+```{r}
+reduced_tree_dat <- tree_dat %>%
+  select(-stand)
+
+glimpse(reduced_tree_dat)
+```
+
+Unlike before, my dataset has one less column on it for this glimpse, which allows me to be more selective with my data.
+
+## Select all columns containing "ID"
+
+```{r}
+id_columns_data <- tree_dat %>%
+  select(contains("ID")) %>%
+  glimpse()
+```
+
+Extracting only columns with "ID" helps in tracking and organizing data more effectively. By using this method or by using specific wording for columns, I will never be lost in too much data because I can always isolate it.
+
+## Select all columns containing "ID" or "stand
+
+```{r}
+id_stand_columns_data <- tree_dat %>%
+  select(contains("ID"), contains("stand")) %>%
+  glimpse()
+```
+
+Taking the last principle to the next level, adding back in information without loosing the ability to more easily note trends and patterns.
+
+## Rename rad_ib and inc to include \_cm
+
+```{r}
+tree_dat <- tree_dat %>%
+  rename(rad_ib_cm = rad_ib, inc_cm = inc) %>% 
+  glimpse()
+```
+
+The ability to rename a column always me to add more clarity or understanding for myself and for potential audiences of my analysis.
+
+# What is the mean Basal Area of Populus tremuloides in 2007?
+
+```{r}
+#QBA(m2) = 0.00007854⋅DBH^2
+#The constant 0.00007854 converts DBH (cm²) to Basal Area (m²).
+
+
+mean_BA_POTR_2007 <- tree_dat %>%
+  mutate(DBH_cm = rad_ib_cm*2,#radius is half of diameter
+         BA_m2 = 0.00007854 * (DBH_cm^2)) %>%
+  filter(species == "POTR", year == 2007) %>%
+  summarize(mean_BA_m2 = mean(BA_m2)) %>%
+  glimpse()
+```
+
+he mean basal area of Populus tremuloides in 2007 was around 0.9242 m².
+
+# Establishing a true or false column to determine if a tree is older than 5 years old
+
+```{r}
+established_trees <- tree_dat %>%
+  mutate(established = if_else(age > 5, TRUE, FALSE)) %>%
+  count(established) %>%
+  glimpse()
+```
+
+By creating this TRUE or FALSE column we whether a tree is older than five years,and can easily differentiate between young and mature trees in the dataset. The results show that there are significantly more established trees (122,503) than younger ones (8,883) that were being accounted for in this study.
+
+# What is the DBH class of the trees in the year 2007?
+
+```{r}
+tree_dat <- tree_dat %>%
+  mutate(DBH_cm = rad_ib_cm) %>%
+  mutate(DBH_class = case_when(
+    DBH_cm >= 0 & DBH_cm <= 2.5 ~ "seedling",
+    DBH_cm > 2.5 & DBH_cm <= 10 ~ "sapling",
+    DBH_cm > 10 & DBH_cm <= 30 ~ "pole",
+    DBH_cm > 30 ~ "sawlog"
+  ))
+
+dbh_classes <- tibble(DBH_class = factor(c("seedling", "sapling", "pole", "sawlog"),
+                                         levels = c("seedling", "sapling", "pole", "sawlog")))
+
+dbh_class_2007 <- tree_dat %>%
+  filter(year == 2007) %>%
+  count(DBH_class) %>%
+#making sure all categories are listed:
+  right_join(dbh_classes, by = "DBH_class") %>%
+  mutate(n = coalesce(n, 0)) 
+
+print(dbh_class_2007)
+```
+
+In 2007, all recorded trees fell into the 'sawlog' category. This ties back to the previous observation that there were fewer 5 year old and younger trees than there were over 5 year old trees. The data set contains mostly older trees..
+
+# What is the standard of DBH in centemeters for all trees in 2007?
+
+```{r}
+dbh_stats_2007 <- tree_dat %>%
+  filter(year == 2007) %>%
+  summarize(mean_DBH_cm = mean(DBH_cm, na.rm = TRUE),
+            sd_DBH_cm = sd(DBH_cm, na.rm = TRUE))
+
+print(dbh_stats_2007)
+```
+
+The mean DBH for all trees in 2007 was 80.47 cm, with a standard deviation of 30.69 cm, indicating that most trees were relatively large. The standard deviation suggests a moderate spread in tree sizes, meaning some trees were significantly smaller or larger than the average. Again this aligns with previous findings that the dataset primarily includes older, well-established trees.
+
+# What are the three tree species with the highest mean age?
+
+```{r}
+oldest_species_2003 <- tree_dat %>%
+  filter(year == 2003) %>%
+  group_by(species) %>%
+  summarize(mean_age = mean(age, na.rm = TRUE)) %>%
+  arrange(desc(mean_age)) %>%
+  slice_head(n = 3)%>%
+  glimpse()
+```
+
+The three species with the highest mean age in 2003 were Thuja occidentalis (126.64 years), Fraxinus nigra (83.08 years), and Pinus strobus (73.29 years). This suggests that these species tend to live longer or were established earlier in the dataset compared to other species. Their longevity may be due to slower growth rates, favorable environmental conditions, or lower disturbance rates in their respective stands.
+
+# How many unique years were recorded in the dataset? What were the first and last years recorded?
+
+```{r}
+#Question 19: In a single summarize call, find the number of unique years with records in the data set along with the first and last year recorded?
+
+year_stats <- tree_dat %>%
+  summarize(
+    unique_years = n_distinct(year),
+    first_year = min(year),
+    last_year = max(year)
+  )
+
+print(year_stats)
+```
+
+In total the dataset contains 111 unique years of recorded data, spanning from 1897 to 2007.
+
+# What stand has the most unique years recorded?
+
+```{r}
+#Question 20: Determine the stands with the largest number of unique years recorded. Report all stands with largest (or tied with the largest) temporal record.
+stand_year_counts <- tree_dat %>%
+  group_by(standID) %>%
+  summarize(unique_years = n_distinct(year)) %>%
+  ungroup() %>%
+  arrange(desc(unique_years)) %>%
+  filter(unique_years == max(unique_years))
+
+print(stand_year_counts)
+```
+
+The stands with the most unique years recorded were Stands 1, 15, 16, 17, and 24, each with 111 unique years of data.
+
+# What are the 3 species with the fastest growth? what are the 3 species with the slowest growth?
+
+```{r}
+growth_rates <- tree_dat %>%
+  arrange(treeID, year) %>%  
+  group_by(treeID, species) %>%
+  mutate(annual_growth = DBH_cm - lag(DBH_cm)) %>%  
+  filter(!is.na(annual_growth)) %>%  
+  summarize(
+    total_years = n(),
+    avg_growth = mean(annual_growth, na.rm = TRUE),
+    sd_growth = sd(annual_growth, na.rm = TRUE),
+     .groups = "drop" #remove the summarize warning
+  ) %>%
+  filter(total_years >= 10) %>%  
+  group_by(species) %>%
+  summarize(
+    mean_growth = mean(avg_growth, na.rm = TRUE),
+    sd_growth = sd(avg_growth, na.rm = TRUE),
+    .groups = "drop" #remove the summarize warning
+  ) %>%
+  arrange(desc(mean_growth))
+
+fastest_growth <- slice_head(growth_rates, n = 3)
+slowest_growth <- slice_tail(growth_rates, n = 3)
+
+print(fastest_growth)
+print(slowest_growth)
+```
+
+The fastest-growing species were Pinus resinosa, Pinus banksiana, and Populus tremuloides, showing the highest average annual DBH growth. These species likely thrive in favorable conditions with rapid height and diameter expansion, possibly due to their adaptability or early successional traits. On the other hand, the slowest-growing species were Quercus rubra, Larix laricina, and Thuja occidentalis, which generally exhibit slower growth rates due to their longer lifespans, shade tolerance, or preference for stable environments. This contrast highlights differences in growth strategies, with some species prioritizing rapid expansion while others invest in longevity and resilience.
+
+![Pinus resinosa by Matt Strieby, 2018.](images/Pinus_resinosa.jpg)
